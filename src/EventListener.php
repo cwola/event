@@ -14,8 +14,6 @@ class EventListener {
 
     /**
      * @param callable $listener
-     *
-     * @throws InvalidArgumentException
      */
     public function __construct(callable $listener) {
         $this->listener = $listener;
