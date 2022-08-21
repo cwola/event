@@ -4,7 +4,18 @@ declare(strict_types=1);
 
 namespace Cwola\Event;
 
+use Cwola\Attribute\Readable;
+
+/**
+ * @property \Cwola\Event\CallableSignature $signature [readonly]
+ */
 class EventListener {
+
+    /**
+     * @var \Cwola\Event\CallableSignature
+     */
+    #[Readable]
+    protected CallableSignature $signature;
 
     /**
      * @var callable
@@ -16,6 +27,7 @@ class EventListener {
      * @param callable $listener
      */
     public function __construct(callable $listener) {
+        $this->signature = new CallableSignature($listener);
         $this->listener = $listener;
     }
 

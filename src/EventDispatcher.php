@@ -27,9 +27,19 @@ trait EventDispatcher {
         if (!isset($this->listeners[$type])) {
             $this->listeners[$type] = [];
         }
+        $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
+        $options = new EventListenOptions($options);
+        list($index, $sameListener) = $this->getSameListener(
+            $type,
+            $listener,
+            $options
+        );
+        if ($sameListener instanceof EventListener) {
+            return $this;
+        }
         $this->listeners[$type][] = [
-            'listener' => \is_callable($listener) ? new EventListener($listener) : $listener,
-            'options' => new EventListenOptions($options)
+            'listener' => $listener,
+            'options' => $options
         ];
         return $this;
     }
@@ -45,21 +55,15 @@ trait EventDispatcher {
         callable|EventListener $listener,
         array|EventListenOptions $options = null
     ) :static {
-        $type = \strtolower($type);
-        if (!isset($this->listeners[$type])) {
+        list($index, $sameListener) = $this->getSameListener(
+            $type,
+            \is_callable($listener) ? new EventListener($listener) : $listener,
+            new EventListenOptions($options)
+        );
+        if (!($sameListener instanceof EventListener)) {
             return $this;
         }
-        // @TODO {{
-        foreach ($this->listeners[$type] as $index => $info) {
-            /** @var \Cwola\Event\EventListener */
-            $compare = $info['listener'];
-            if ($listener->signature === $compare->signature) {
-                \array_splice($this->listeners[$type], $index, 1);
-                break;
-            }
-            // ignore options->once option.
-        }
-        // }} @TODO
+        \array_splice($this->listeners[$type], $index, 1);
         return $this;
     }
 
@@ -119,5 +123,28 @@ trait EventDispatcher {
             $this,
             $options
         );
+    }
+
+    /**
+     * @param string $type
+     * @param \Cwola\Event\EventListener $listener
+     * @param \Cwola\Event\EventListenOptions $options
+     * @return array [$index, $listener] or [null, null]
+     */
+    protected function getSameListener(string $type, EventListener $listener, EventListenOptions $options) :array {
+        $type = \strtolower($type);
+        if (!isset($this->listeners[$type])) {
+            return [null, null];
+        }
+
+        foreach ($this->listeners[$type] as $index => $info) {
+            /** @var \Cwola\Event\EventListener */
+            $compare = $info['listener'];
+            if ($listener->signature === $compare->signature) {
+                // ignore options->once option.
+                return [$index, $compare];
+            }
+        }
+        return [null, null];
     }
 }
