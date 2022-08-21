@@ -7,7 +7,7 @@ namespace Cwola\Event;
 class EventListenOptions {
 
     /**
-     * @param bool
+     * @var bool
      */
     public bool $once = false;
 

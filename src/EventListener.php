@@ -7,13 +7,15 @@ namespace Cwola\Event;
 class EventListener {
 
     /**
-     * @param callable $listener
+     * @var callable
      */
     protected /* callable */ $listener;
 
 
     /**
      * @param callable $listener
+     *
+     * @throws InvalidArgumentException
      */
     public function __construct(callable $listener) {
         $this->listener = $listener;

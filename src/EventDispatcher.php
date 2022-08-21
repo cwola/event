@@ -7,7 +7,7 @@ namespace Cwola\Event;
 trait EventDispatcher {
 
     /**
-     * @param array
+     * @var array
      */
     protected array $listeners = [];
 
@@ -49,7 +49,18 @@ trait EventDispatcher {
         if (!isset($this->listeners[$type])) {
             return $this;
         }
-        // @todo
+        // @TODO {{
+        foreach ($this->listeners[$type] as $index => $info) {
+            /** @var \Cwola\Event\EventListener */
+            $compare = $info['listener'];
+            if ($listener->signature === $compare->signature) {
+                \array_splice($this->listeners[$type], $index, 1);
+                break;
+            }
+            // ignore options->once option.
+        }
+        // }} @TODO
+        return $this;
     }
 
     /**
