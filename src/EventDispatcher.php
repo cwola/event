@@ -27,7 +27,7 @@ trait EventDispatcher {
         if (!isset($this->listeners[$type])) {
             $this->listeners[$type] = [];
         }
-        $this->listener[$type][] = [
+        $this->listeners[$type][] = [
             'listener' => \is_callable($listener) ? new EventListener($listener) : $listener,
             'options' => new EventListenOptions($options)
         ];
