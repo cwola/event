@@ -8,6 +8,21 @@ trait EventDispatcher {
 
     /**
      * @var array
+     *
+     * [
+     *     $eventType => [
+     *         'priority' => [
+     *             &$listenersElement, &$listenersElement, &$listenersElement ...
+     *         ],
+     *         'listeners' => [
+     *             $signature => [
+     *                 'listener' => $listener,
+     *                 'options' => $options,
+     *                 'priority' => index of 'priority' element
+     *             ], ...
+     *         ]
+     *     ], ...
+     * ]
      */
     protected array $listeners = [];
 
@@ -25,8 +40,12 @@ trait EventDispatcher {
     ) :static {
         $type = \strtolower($type);
         if (!isset($this->listeners[$type])) {
-            $this->listeners[$type] = [];
+            $this->listeners[$type] = [
+                'priority' => [],
+                'listeners' => []
+            ];
         }
+
         $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
         $options = new EventListenOptions($options);
         list($index, $sameListener) = $this->getSameListener(
@@ -34,13 +53,16 @@ trait EventDispatcher {
             $listener,
             $options
         );
-        if ($sameListener instanceof EventListener) {
-            return $this;
+
+        if (!($sameListener instanceof EventListener)) {
+            $priority = \count($this->listeners[$type]['priority']);
+            $this->listeners[$type]['listeners'][$listener->signature] = [
+                'listener' => $listener,
+                'options' => $options,
+                'priority' => $priority
+            ];
+            $this->listeners[$type]['priority'][$priority] = &$this->listeners[$type]['listeners'][$listener->signature];
         }
-        $this->listeners[$type][] = [
-            'listener' => $listener,
-            'options' => $options
-        ];
         return $this;
     }
 
@@ -60,10 +82,10 @@ trait EventDispatcher {
             \is_callable($listener) ? new EventListener($listener) : $listener,
             new EventListenOptions($options)
         );
-        if (!($sameListener instanceof EventListener)) {
-            return $this;
+        if ($sameListener instanceof EventListener) {
+            \array_splice($this->listeners[$type]['priority'], $index, 1);
+            unset($this->listeners[$type]['listeners'][$listener->signature]);
         }
-        \array_splice($this->listeners[$type], $index, 1);
         return $this;
     }
 
@@ -76,7 +98,7 @@ trait EventDispatcher {
         if (!isset($this->listeners[$type])) {
             return $this;
         }
-        foreach ($this->listeners[$type] as $info) {
+        foreach ($this->listeners[$type]['priority'] as $info) {
             /** @var \Cwola\Event\EventListener */
             $listener = $info['listener'];
             /** @var \Cwola\Event\EventListenOptions */
@@ -137,13 +159,12 @@ trait EventDispatcher {
             return [null, null];
         }
 
-        foreach ($this->listeners[$type] as $index => $info) {
-            /** @var \Cwola\Event\EventListener */
-            $compare = $info['listener'];
-            if ($listener->signature === $compare->signature) {
-                // ignore options->once option.
-                return [$index, $compare];
-            }
+        if (isset($this->listeners[$type]['listeners'][$listener->signature])) {
+            // ignore options->once option.
+            return [
+                $this->listeners[$type]['listeners'][$listener->signature]['priority'],
+                $this->listeners[$type]['listeners'][$listener->signature]['listener']
+            ];
         }
         return [null, null];
     }
