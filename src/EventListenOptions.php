@@ -17,8 +17,9 @@ class EventListenOptions {
      */
     public function __construct(array|EventListenOptions $options = []) {
         if (\is_array($options)) {
-            $options = new self($options);
+            $this->once = isset($options['once']) ? !!$options['once'] : false;
+        } else {
+            $this->once = $options->once;
         }
-        $this->once = $options->once;
     }
 }

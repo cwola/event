@@ -15,7 +15,7 @@ interface EventTarget {
     public function addEventListener(
         string $type,
         callable|EventListener $listener,
-        array|EventListenOptions $options = null
+        array|EventListenOptions $options = []
     );
 
     /**
@@ -27,14 +27,14 @@ interface EventTarget {
     public function removeEventListener(
         string $type,
         callable|EventListener $listener,
-        array|EventListenOptions $options = null
+        array|EventListenOptions $options = []
     );
 
     /**
      * @param string $type
      * @return mixed
      */
-    public function fireEvent(string $type);
+    public function dispatchEvent(string $type);
 
     /**
      * @param string $type

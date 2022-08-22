@@ -11,6 +11,8 @@ use Cwola\Attribute\Readable;
  */
 class EventListener {
 
+    use Readable;
+
     /**
      * @var \Cwola\Event\CallableSignature
      */

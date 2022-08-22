@@ -4,25 +4,12 @@ declare(strict_types=1);
 
 namespace Cwola\Event;
 
+use Cwola\Event\Map\HashMap;
+
 trait EventDispatcher {
 
     /**
-     * @var array
-     *
-     * [
-     *     $eventType => [
-     *         'priority' => [
-     *             &$listenersElement, &$listenersElement, &$listenersElement ...
-     *         ],
-     *         'listeners' => [
-     *             $signature => [
-     *                 'listener' => $listener,
-     *                 'options' => $options,
-     *                 'priority' => index of 'priority' element
-     *             ], ...
-     *         ]
-     *     ], ...
-     * ]
+     * @var \Cwola\Event\Map\HashMap[]
      */
     protected array $listeners = [];
 
@@ -36,32 +23,25 @@ trait EventDispatcher {
     public function addEventListener(
         string $type,
         callable|EventListener $listener,
-        array|EventListenOptions $options = null
+        array|EventListenOptions $options = []
     ) :static {
         $type = \strtolower($type);
         if (!isset($this->listeners[$type])) {
-            $this->listeners[$type] = [
-                'priority' => [],
-                'listeners' => []
-            ];
+            $this->listeners[$type] = new HashMap;
         }
-
         $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
         $options = new EventListenOptions($options);
-        list($index, $sameListener) = $this->getSameListener(
+        $sameListener = $this->getSameListener(
             $type,
             $listener,
             $options
         );
 
         if (!($sameListener instanceof EventListener)) {
-            $priority = \count($this->listeners[$type]['priority']);
-            $this->listeners[$type]['listeners'][$listener->signature] = [
+            $this->listeners[$type]->set((string)$listener->signature, [
                 'listener' => $listener,
-                'options' => $options,
-                'priority' => $priority
-            ];
-            $this->listeners[$type]['priority'][$priority] = &$this->listeners[$type]['listeners'][$listener->signature];
+                'options' => $options
+            ]);
         }
         return $this;
     }
@@ -75,16 +55,17 @@ trait EventDispatcher {
     public function removeEventListener(
         string $type,
         callable|EventListener $listener,
-        array|EventListenOptions $options = null
+        array|EventListenOptions $options = []
     ) :static {
-        list($index, $sameListener) = $this->getSameListener(
+        $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
+        $options = new EventListenOptions($options);
+        $sameListener = $this->getSameListener(
             $type,
-            \is_callable($listener) ? new EventListener($listener) : $listener,
-            new EventListenOptions($options)
+            $listener,
+            $options
         );
         if ($sameListener instanceof EventListener) {
-            \array_splice($this->listeners[$type]['priority'], $index, 1);
-            unset($this->listeners[$type]['listeners'][$listener->signature]);
+            $this->listeners[$type]->unset((string)$sameListener->signature);
         }
         return $this;
     }
@@ -93,12 +74,12 @@ trait EventDispatcher {
      * @param string $type
      * @return $this
      */
-    public function fireEvent(string $type) :static {
+    public function dispatchEvent(string $type) :static {
         $type = \strtolower($type);
         if (!isset($this->listeners[$type])) {
             return $this;
         }
-        foreach ($this->listeners[$type]['priority'] as $info) {
+        $this->listeners[$type]->forEach(function($signature, $info, $type) {
             /** @var \Cwola\Event\EventListener */
             $listener = $info['listener'];
             /** @var \Cwola\Event\EventListenOptions */
@@ -114,9 +95,9 @@ trait EventDispatcher {
                 );
             }
             if ($event->propagationStoped) {
-                break;
+                return false;
             }
-        }
+        }, $type);
         return $this;
     }
 
@@ -151,21 +132,18 @@ trait EventDispatcher {
      * @param string $type
      * @param \Cwola\Event\EventListener $listener
      * @param \Cwola\Event\EventListenOptions $options
-     * @return array [$index, $listener] or [null, null]
+     * @return \Cwola\Event\EventListener|null
      */
-    protected function getSameListener(string $type, EventListener $listener, EventListenOptions $options) :array {
+    protected function getSameListener(string $type, EventListener $listener, EventListenOptions $options) :EventListener|null {
         $type = \strtolower($type);
         if (!isset($this->listeners[$type])) {
-            return [null, null];
+            return null;
         }
 
-        if (isset($this->listeners[$type]['listeners'][$listener->signature])) {
+        if (($info = $this->listeners[$type]->get((string)$listener->signature)) !== null) {
             // ignore options->once option.
-            return [
-                $this->listeners[$type]['listeners'][$listener->signature]['priority'],
-                $this->listeners[$type]['listeners'][$listener->signature]['listener']
-            ];
+            return $info['listener'];
         }
-        return [null, null];
+        return null;
     }
 }

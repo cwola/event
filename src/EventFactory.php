@@ -15,16 +15,16 @@ class EventFactory {
     public static function create(
         string $type,
         EventTarget $target,
-        array|EventListenOptions $options = null
+        array|EventListenOptions $options = []
     ) :Event {
         $options = new EventListenOptions($options);
         $event = 'Event';
         if ($options->once) {
             $event = 'OnceEvent';
         }
-        return (new ('Cwola\\Event\\' . $event))(
+        return (new ('Cwola\\Event\\' . $event)(
             $type,
             $target
-        );
+        ));
     }
 }

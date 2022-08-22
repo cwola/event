@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cwola\Event;
 
+use Stringable;
 use Closure;
 use Exception;
 use Cwola\Attribute\Readable;
@@ -12,7 +13,7 @@ use Cwola\Attribute\Readable;
  * @property string $type [readonly]
  * @property string $signature [readonly]
  */
-class CallableSignature {
+class CallableSignature implements Stringable {
 
     use Readable;
 
@@ -68,6 +69,14 @@ class CallableSignature {
             $this->type = static::SIGNATURE_ARRAY;
         }
         $this->signature = $this->genSignature($callback);
+    }
+
+    /**
+     * @param void
+     * @return string
+     */
+    public function __toString() :string {
+        return $this->signature;
     }
 
     /**

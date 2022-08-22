@@ -9,7 +9,7 @@ use Cwola\Attribute\Readable;
 
 /**
  * @property string $id [readonly]
- * @property \DateTime $timeStamp [readonly]
+ * @property string $timeStamp [readonly]
  * @property string $type [readonly]
  * @property \Cwola\Event\EventTarget $target [readonly]
  * @property bool $cancelable [readonly]
@@ -26,10 +26,10 @@ class Event {
     protected string $id;
 
     /**
-     * @var \DateTime
+     * @var string
      */
     #[Readable]
-    protected DateTime $timeStamp;
+    protected string $timeStamp;
 
     /**
      * @var string
@@ -47,7 +47,7 @@ class Event {
      * @var bool
      */
     #[Readable]
-    protected bool $cancelable = false;
+    protected bool $cancelable = true;
 
     /**
      * @var bool
@@ -63,7 +63,7 @@ class Event {
      */
     public function __construct(string $type, EventTarget $target) {
         $this->id = \md5(\uniqid($type, true));
-        $this->timeStamp = new DateTime('now');
+        $this->timeStamp = (new DateTime('now'))->format('c');
         $this->type = $type;
         $this->target = $target;
     }
