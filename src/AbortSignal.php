@@ -12,6 +12,7 @@ use Cwola\Attribute\Readable;
  */
 class AbortSignal implements EventTarget {
 
+    use Readable;
     use EventDispatcher;
 
     /**

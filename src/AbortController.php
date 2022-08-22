@@ -11,6 +11,8 @@ use Cwola\Attribute\Readable;
  */
 class AbortController {
 
+    use Readable;
+
     /**
      * @var \Cwola\Event\AbortSignal
      */
