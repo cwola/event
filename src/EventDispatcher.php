@@ -31,18 +31,10 @@ trait EventDispatcher {
         }
         $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
         $options = new EventListenOptions($options);
-        $sameListener = $this->getSameListener(
-            $type,
-            $listener,
-            $options
-        );
-
-        if (!($sameListener instanceof EventListener)) {
-            $this->listeners[$type]->set((string)$listener->signature, [
-                'listener' => $listener,
-                'options' => $options
-            ]);
-        }
+        $this->listeners[$type]->set((string)$listener->signature, [
+            'listener' => $listener,
+            'options' => $options
+        ]);
         return $this;
     }
 
@@ -59,14 +51,7 @@ trait EventDispatcher {
     ) :static {
         $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
         $options = new EventListenOptions($options);
-        $sameListener = $this->getSameListener(
-            $type,
-            $listener,
-            $options
-        );
-        if ($sameListener instanceof EventListener) {
-            $this->listeners[$type]->unset((string)$sameListener->signature);
-        }
+        $this->listeners[$type]->unset((string)$listener->signature);
         return $this;
     }
 
@@ -126,24 +111,5 @@ trait EventDispatcher {
             $this,
             $options
         );
-    }
-
-    /**
-     * @param string $type
-     * @param \Cwola\Event\EventListener $listener
-     * @param \Cwola\Event\EventListenOptions $options
-     * @return \Cwola\Event\EventListener|null
-     */
-    protected function getSameListener(string $type, EventListener $listener, EventListenOptions $options) :EventListener|null {
-        $type = \strtolower($type);
-        if (!isset($this->listeners[$type])) {
-            return null;
-        }
-
-        if (($info = $this->listeners[$type]->get((string)$listener->signature)) !== null) {
-            // ignore options->once option.
-            return $info['listener'];
-        }
-        return null;
     }
 }
