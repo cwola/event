@@ -35,10 +35,4 @@ interface EventTarget {
      * @return mixed
      */
     public function dispatchEvent(string $type);
-
-    /**
-     * @param string $type
-     * @return mixed
-     */
-    public function clearEvent(string $type);
 }

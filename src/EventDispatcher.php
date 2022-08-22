@@ -70,8 +70,15 @@ trait EventDispatcher {
             /** @var \Cwola\Event\EventListenOptions */
             $options = $info['options'];
             $event = $this->createEvent($type, $options);
-            
-            $listener->handleEvent($event);
+
+            if ($options->signal instanceof AbortSignal && $options->signal->aborted) {
+                $this->removeEventListener(
+                    $type,
+                    $listener,
+                    $options
+                );
+                return;
+            }
             if ($event instanceof OnceEvent) {
                 $this->removeEventListener(
                     $type,
@@ -79,23 +86,14 @@ trait EventDispatcher {
                     $options
                 );
             }
+            $listener->handleEvent($event);
+            if (!$event->defaultPrevented) {
+                $event->handleDefault();
+            }
             if ($event->propagationStoped) {
                 return false;
             }
         }, $type);
-        return $this;
-    }
-
-    /**
-     * @param string $type
-     * @return $this
-     */
-    public function clearEvent(string $type) :static {
-        $type = \strtolower($type);
-        if (!isset($this->listeners[$type])) {
-            return $this;
-        }
-        unset($this->listeners[$type]);
         return $this;
     }
 

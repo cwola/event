@@ -14,6 +14,7 @@ use Cwola\Attribute\Readable;
  * @property \Cwola\Event\EventTarget $target [readonly]
  * @property bool $cancelable [readonly]
  * @property bool $propagationStoped [readonly]
+ * @property bool $defaultPrevented [readonly]
  */
 class Event {
 
@@ -53,6 +54,12 @@ class Event {
      * @var bool
      */
     #[Readable]
+    protected bool $defaultPrevented = false;
+
+    /**
+     * @var bool
+     */
+    #[Readable]
     protected bool $propagationStoped = false;
 
 
@@ -72,9 +79,25 @@ class Event {
      * @param void
      * @return void
      */
-    public function stopPropagation() :void {
+    public function preventDefault() :void {
         if ($this->cancelable) {
-            $this->propagationStoped = true;
+            $this->defaultPrevented = true;
         }
+    }
+
+    /**
+     * @param void
+     * @return void
+     */
+    public function stopPropagation() :void {
+        $this->propagationStoped = true;
+    }
+
+    /**
+     * @param void
+     * @return void
+     */
+    public function handleDefault() :void {
+        // do somehing.
     }
 }
