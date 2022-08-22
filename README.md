@@ -1,43 +1,160 @@
-# Transaction
+# Event
 
-Simple transaction modules.
+Simple event listener.
 
 ## Overview
 
-"Really simple" transaction modules.
-
-This module is not intended to be used by itself.
+Simple event listener.
 
 ## Requirement
-- PHP7.0+
+- PHP8.0+
+- [cwola/attribute](https://packagist.org/packages/cwola/attribute)
 
 ## Installation
 ```
-composer require cwola/transaction
+composer require cwola/event
 ```
 
-## Usage
+## Usage of EventTarget
+```
+<?php
+use Cwola\Event;
+
+class FooEngine implements Event\EventTarget {
+    use Event\EventDispatcher;
+
+    public function boot() {
+        $this->dispatchEvent('beforeBoot');
+
+        // boot process...
+
+        $this->dispatchEvent('booted');
+    }
+}
+
+$engine = new FooEngine;
+$engine->addEventListener('beforeBoot', function(Event\Event $event) {
+    echo sprintf('%s : start boot method.', $event->timeStamp) . PHP_EOL;
+});
+$engine->addEventListener('booted', function(Event\Event $event) {
+    echo sprintf('%s : end boot method.', $event->timeStamp) . PHP_EOL;
+});
+$engine->boot();
+// output
+// 2022-08-22T23:32:51+09:00 : start boot method.
+// boot process... wait 10 sec...
+// 2022-08-22T23:33:01+09:00 : end boot method.
+//
+
+```
+
+## Stop propagation / OnceEvent
 ```
 <?php
 
-use Cwola\Transaction;
+use Cwola\Event;
 
-$transaction = new Transaction\Transaction;
-$transaction->begin();
+class FooEngine implements Event\EventTarget {
+    use Event\EventDispatcher;
 
-echo $transaction->inTransaction()
-    ? 'OPENED' : 'CLOSED';
-// output : OPENED
+    public function boot() {
+        $this->dispatchEvent('initialize');
+
+        $this->dispatchEvent('beforeBoot');
+
+        // boot process...
+
+        $this->dispatchEvent('booted');
+    }
+
+    public function init() {
+        // init...
+    }
+}
+
+$engine = new FooEngine;
+
+$engine->addEventListener('initialize', [$engine, 'init'], ['once' => true]);
+
+$engine->addEventListener('beforeBoot', function(Event\Event $event) {
+    echo sprintf('%s : start boot method.', $event->timeStamp) . PHP_EOL;
+});
+$engine->addEventListener('booted', function(Event\Event $event) {
+    echo sprintf('%s : end boot method.', $event->timeStamp) . PHP_EOL;
+    $event->stopPropagation();
+});
+$engine->addEventListener('booted', function(Event\Event $event) {
+    // not reached.
+    echo 'not reached';
+});
+
+$engine->boot();
+// output
+// init...
+// 2022-08-22T23:32:51+09:00 : start boot method.
+// boot process... wait 10 sec...
+// 2022-08-22T23:33:01+09:00 : end boot method.
+//
+
+$engine->boot();
+// output
+// 2022-08-22T23:33:01+09:00 : start boot method.
+// boot process... wait 10 sec...
+// 2022-08-22T23:33:11+09:00 : end boot method.
+//
+
+```
+
+## AbortSignal
+```
+<?php
+
+use Cwola\Event;
+
+class FooEngine implements Event\EventTarget {
+    use Event\EventDispatcher;
+
+    public function boot() {
+        $this->dispatchEvent('beforeBoot');
+
+        // boot process...
+
+        $this->dispatchEvent('booted');
+    }
+}
+
+$abortController = new Event\AbortController;
+$signal = $abortController->signal;
+$signal->addEventListener('abort', function(Event\Event $event) {
+    echo 'No notification during the night.' . PHP_EOL;
+});
+
+$engine = new FooEngine;
+$engine->addEventListener('beforeBoot', function(Event\Event $event) {
+    echo sprintf('%s : start boot method.', $event->timeStamp) . PHP_EOL;
+});
+$engine->addEventListener('booted', function(Event\Event $event) use ($abortController) {
+    echo sprintf('%s : end boot method.', $event->timeStamp) . PHP_EOL;
+    // No notification during the night.
+    if (isNight()) {
+        $abortController->abort();
+    }
+}); 
+$engine->addEventListener('booted', function(Event\Event $event) {
+    // notify...
+}, ['signal' => $signal]);
 
 
-$transaction->commit();
-
-echo $transaction->inTransaction()
-    ? 'OPENED' : 'CLOSED';
-// output : CLOSED
+$engine->boot();
+// output
+// 2022-08-22T23:32:51+09:00 : start boot method.
+// boot process... wait 10 sec...
+// 2022-08-22T23:33:01+09:00 : end boot method.
+// No notification during the night.
+//
 
 ```
 
 ## Licence
 
-[MIT](https://github.com/cwola/transaction/blob/main/LICENSE)
+[MIT](https://github.com/cwola/event/blob/main/LICENSE)

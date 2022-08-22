@@ -2,7 +2,6 @@
     "name": "cwola/event",
     "description": "Simple event listener.",
     "type": "library",
-    "version": "1.0.0",
     "keywords": [
       "php",
       "cwola",
