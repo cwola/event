@@ -26,7 +26,8 @@ class FooEngine implements Event\EventTarget {
     public function boot() {
         $this->dispatchEvent('beforeBoot');
 
-        // boot process...
+        echo 'boot process... wait 10 sec...' . PHP_EOL;
+        sleep(10);
 
         $this->dispatchEvent('booted');
     }
@@ -57,24 +58,30 @@ use Cwola\Event;
 class FooEngine implements Event\EventTarget {
     use Event\EventDispatcher;
 
+    public function __construct() {
+        $this->addEventListener('initialize', function(Event\Event $event) {
+            $this->init();
+            // equals $event->target->init();
+        }, ['once' => true]);
+    }
+
     public function boot() {
         $this->dispatchEvent('initialize');
 
         $this->dispatchEvent('beforeBoot');
 
-        // boot process...
+        echo 'boot process... wait 10 sec...' . PHP_EOL;
+        sleep(10);
 
         $this->dispatchEvent('booted');
     }
 
-    public function init() {
-        // init...
+    protected function init() {
+        echo 'init...' . PHP_EOL;
     }
 }
 
 $engine = new FooEngine;
-
-$engine->addEventListener('initialize', [$engine, 'init'], ['once' => true]);
 
 $engine->addEventListener('beforeBoot', function(Event\Event $event) {
     echo sprintf('%s : start boot method.', $event->timeStamp) . PHP_EOL;
@@ -117,7 +124,8 @@ class FooEngine implements Event\EventTarget {
     public function boot() {
         $this->dispatchEvent('beforeBoot');
 
-        // boot process...
+        echo 'boot process... wait 10 sec...' . PHP_EOL;
+        sleep(10);
 
         $this->dispatchEvent('booted');
     }
@@ -141,7 +149,7 @@ $engine->addEventListener('booted', function(Event\Event $event) use ($abortCont
     }
 }); 
 $engine->addEventListener('booted', function(Event\Event $event) {
-    // notify...
+    echo 'notify...' . PHP_EOL;
 }, ['signal' => $signal]);
 
 
