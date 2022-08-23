@@ -29,6 +29,13 @@ class AbortSignal implements EventTarget {
 
 
     /**
+     * @param void
+     */
+    public function __construct() {
+        $this->eventFactory = new AbortEventFactory;
+    }
+
+    /**
      * @param string $reason [optional]
      * @return void
      */
@@ -48,17 +55,5 @@ class AbortSignal implements EventTarget {
         if ($this->aborted) {
             throw new Error\AbortError($this->reason ?? '');
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function createEvent(string $type, EventListenOptions $options) :Event {
-        $type = \strtolower($type);
-        return AbortEventFactory::create(
-            $type,
-            $this,
-            $options
-        );
     }
 }

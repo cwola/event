@@ -9,6 +9,11 @@ use Cwola\Event\Map\HashMap;
 trait EventDispatcher {
 
     /**
+     * @var \Cwola\Event\EventFactory|null
+     */
+    protected EventFactory|null $eventFactory = null;
+
+    /**
      * @var \Cwola\Event\Map\HashMap[]
      */
     protected array $listeners = [];
@@ -79,7 +84,7 @@ trait EventDispatcher {
                 );
                 return;
             }
-            if ($event instanceof OnceEvent) {
+            if ($options->once) {
                 $this->removeEventListener(
                     $type,
                     $listener,
@@ -103,11 +108,17 @@ trait EventDispatcher {
      * @return \Cwola\Event\Event
      */
     protected function createEvent(string $type, EventListenOptions $options) :Event {
-        $type = \strtolower($type);
-        return EventFactory::create(
-            $type,
-            $this,
-            $options
-        );
+        return $this->eventFactory()(\strtolower($type), $this, $options);
+    }
+
+    /**
+     * @param void
+     * @return \Cwola\Event\EventFactory
+     */
+    protected function eventFactory() :EventFactory {
+        if ($this->eventFactory === null) {
+            $this->eventFactory = new EventFactory;
+        }
+        return $this->eventFactory;
     }
 }

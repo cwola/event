@@ -11,20 +11,31 @@ class EventFactory {
      * @param \Cwola\Event\EventTarget $target
      * @param array|\Cwola\Event\EventListenOptions $options [optional]
      * @return \Cwola\Event\Event
+     *
+     * @see EventFactory::create()
+     */
+    public function __invoke(
+        string $type,
+        EventTarget $target,
+        array|EventListenOptions $options = []
+    ) :Event {
+        return static::create($type, $target, $options);
+    }
+
+    /**
+     * @param string $type
+     * @param \Cwola\Event\EventTarget $target
+     * @param array|\Cwola\Event\EventListenOptions $options [optional]
+     * @return \Cwola\Event\Event
      */
     public static function create(
         string $type,
         EventTarget $target,
         array|EventListenOptions $options = []
     ) :Event {
-        $options = new EventListenOptions($options);
-        $event = 'Event';
-        if ($options->once) {
-            $event = 'OnceEvent';
-        }
-        return (new ('Cwola\\Event\\' . $event)(
+        return new Event(
             $type,
             $target
-        ));
+        );
     }
 }
