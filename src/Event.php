@@ -98,6 +98,6 @@ class Event {
      * @return void
      */
     public function handleDefault() :void {
-        // do somehing.
+        // do something.
     }
 }

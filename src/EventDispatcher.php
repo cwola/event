@@ -34,7 +34,7 @@ trait EventDispatcher {
         if (!isset($this->listeners[$type])) {
             $this->listeners[$type] = new HashMap;
         }
-        $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
+        $listener = ($listener instanceof EventListener) ? $listener : new EventListener($listener);
         $options = new EventListenOptions($options);
         $this->listeners[$type]->set((string)$listener->signature, [
             'listener' => $listener,
@@ -52,7 +52,7 @@ trait EventDispatcher {
         string $type,
         callable|EventListener $listener
     ) :static {
-        $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
+        $listener = ($listener instanceof EventListener) ? $listener : new EventListener($listener);
         $signature = (string)$listener->signature;
         if (
             $this->listeners[$type]->has($signature)
@@ -80,18 +80,18 @@ trait EventDispatcher {
             $event = $this->createEvent($type, $options);
 
             if ($options->signal instanceof AbortSignal && $options->signal->aborted) {
+                $options->removable = true;  // forced.
                 $this->removeEventListener(
                     $type,
-                    $listener,
-                    $options
+                    $listener
                 );
                 return;
             }
             if ($options->once) {
+                $options->removable = true;  // forced.
                 $this->removeEventListener(
                     $type,
-                    $listener,
-                    $options
+                    $listener
                 );
             }
             $listener->handleEvent($event);
