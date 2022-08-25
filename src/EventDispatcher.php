@@ -46,17 +46,20 @@ trait EventDispatcher {
     /**
      * @param string $type
      * @param callable|\Cwola\Event\EventListener $listener
-     * @param object|\Cwola\Event\EventListenOptions $options [optional]
      * @return $this
      */
     public function removeEventListener(
         string $type,
-        callable|EventListener $listener,
-        array|EventListenOptions $options = []
+        callable|EventListener $listener
     ) :static {
         $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
-        $options = new EventListenOptions($options);
-        $this->listeners[$type]->unset((string)$listener->signature);
+        $signature = (string)$listener->signature;
+        if (
+            $this->listeners[$type]->has($signature)
+            && $this->listeners[$type]->get($signature)['options']->removable
+        ) {
+            $this->listeners[$type]->unset($signature);
+        }
         return $this;
     }
 
