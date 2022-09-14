@@ -65,7 +65,6 @@ class Event {
 
     /**
      * @param string $type
-     * @param \Cwola\Event\EventOptions $options
      * @param \Cwola\Event\EventTarget $target
      */
     public function __construct(string $type, EventTarget $target) {
@@ -98,6 +97,6 @@ class Event {
      * @return void
      */
     public function handleDefault() :void {
-        // do somehing.
+        // do something.
     }
 }

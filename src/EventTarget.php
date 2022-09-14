@@ -8,26 +8,24 @@ interface EventTarget {
 
     /**
      * @param string $type
-     * @param callable|\Cwola\Event\EventListener $listener
-     * @param array|\Cwola\Event\EventListenOptions $options [optional]
+     * @param callable|\Cwola\Event\Listener\EventListener $listener
+     * @param array|\Cwola\Event\Listener\Options $options [optional]
      * @return mixed
      */
     public function addEventListener(
         string $type,
-        callable|EventListener $listener,
-        array|EventListenOptions $options = []
+        callable|Listener\EventListener $listener,
+        array|Listener\Options $options = []
     );
 
     /**
      * @param string $type
-     * @param callable|\Cwola\Event\EventListener $listener
-     * @param array|\Cwola\Event\EventListenOptions $options [optional]
+     * @param callable|\Cwola\Event\Listener\EventListener $listener
      * @return mixed
      */
     public function removeEventListener(
         string $type,
-        callable|EventListener $listener,
-        array|EventListenOptions $options = []
+        callable|Listener\EventListener $listener
     );
 
     /**

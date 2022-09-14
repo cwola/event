@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Cwola\Event;
+namespace Cwola\Event\Factory;
+
+use Cwola\Event\EventTarget;
+use Cwola\Event\Listener\Options;
+use Cwola\Event\Event\AbortEvent;
 
 class AbortEventFactory extends EventFactory {
 
@@ -12,8 +16,8 @@ class AbortEventFactory extends EventFactory {
     public static function create(
         string $type,
         EventTarget $target,
-        array|EventListenOptions $options = []
-    ) :Event {
+        array|Options $options = []
+    ) :AbortEvent {
         if ($type === 'abort') {
             return new AbortEvent(
                 $type,

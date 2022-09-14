@@ -2,15 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Cwola\Event;
+namespace Cwola\Event\Signal;
 
 use Cwola\Attribute\Readable;
+use Cwola\Event\EventDispatcher;
+use Cwola\Event\Factory\SuspendEventFactory;
 
 /**
- * @property bool $aborted [readonly]
+ * @property bool $suspended [readonly]
  * @property string|null $reason [readonly]
  */
-class AbortSignal implements EventTarget {
+class SuspendSignal implements Signal {
 
     use Readable;
     use EventDispatcher;
@@ -19,7 +21,7 @@ class AbortSignal implements EventTarget {
      * @var bool
      */
     #[Readable]
-    protected bool $aborted = false;
+    protected bool $suspended = false;
 
     /**
      * @var string|null
@@ -32,28 +34,26 @@ class AbortSignal implements EventTarget {
      * @param void
      */
     public function __construct() {
-        $this->eventFactory = new AbortEventFactory;
+        $this->eventFactory = new SuspendEventFactory;
     }
 
     /**
      * @param string $reason [optional]
      * @return void
      */
-    public function abort(string $reason = 'AbortError') :void {
-        $this->aborted = true;
+    public function suspend(string $reason = 'Suspend') :void {
+        $this->suspended = true;
         $this->reason = $reason;
-        $this->dispatchEvent('abort');
+        $this->dispatchEvent('suspend');
     }
 
     /**
      * @param void
      * @return void
-     *
-     * @throws \Cwola\Event\Error\AbortError
      */
-    public function throwIfAborted() :void {
-        if ($this->aborted) {
-            throw new Error\AbortError($this->reason ?? '');
-        }
+    public function resume() :void {
+        $this->suspended = false;
+        $this->reason = null;
+        $this->dispatchEvent('resume');
     }
 }

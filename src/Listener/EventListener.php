@@ -2,19 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Cwola\Event;
+namespace Cwola\Event\Listener;
 
 use Cwola\Attribute\Readable;
+use Cwola\Event\Signature\CallableSignature;
+use Cwola\Event\Event;
 
 /**
- * @property \Cwola\Event\CallableSignature $signature [readonly]
+ * @property \Cwola\Event\Signature\CallableSignature $signature [readonly]
  */
 class EventListener {
 
     use Readable;
 
     /**
-     * @var \Cwola\Event\CallableSignature
+     * @var \Cwola\Event\Signature\CallableSignature
      */
     #[Readable]
     protected CallableSignature $signature;

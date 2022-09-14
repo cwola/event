@@ -2,19 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Cwola\Event;
+namespace Cwola\Event\Signal\Controller;
 
 use Cwola\Attribute\Readable;
+use Cwola\Event\Signal\AbortSignal;
 
 /**
- * @property \Cwola\Event\AbortSignal $signal [readonly]
+ * @property \Cwola\Event\Signal\AbortSignal $signal [readonly]
  */
 class AbortController {
 
     use Readable;
 
     /**
-     * @var \Cwola\Event\AbortSignal
+     * @var \Cwola\Event\Signal\AbortSignal
      */
     #[Readable]
     protected AbortSignal $signal;

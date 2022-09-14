@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Cwola\Event;
 
 use Cwola\Event\Map\HashMap;
+use Cwola\Event\Factory\EventFactory;
+use Cwola\Event\Listener;
+use Cwola\Event\Signal;
 
 trait EventDispatcher {
 
     /**
-     * @var \Cwola\Event\EventFactory|null
+     * @var \Cwola\Event\Factory\EventFactory|null
      */
     protected EventFactory|null $eventFactory = null;
 
@@ -21,21 +24,21 @@ trait EventDispatcher {
 
     /**
      * @param string $type
-     * @param callable|\Cwola\Event\EventListener $listener
-     * @param object|\Cwola\Event\EventListenOptions $options [optional]
+     * @param callable|\Cwola\Event\Listener\EventListener $listener
+     * @param object|\Cwola\Event\Listener\Options $options [optional]
      * @return $this
      */
     public function addEventListener(
         string $type,
-        callable|EventListener $listener,
-        array|EventListenOptions $options = []
+        callable|Listener\EventListener $listener,
+        array|Listener\Options $options = []
     ) :static {
         $type = \strtolower($type);
         if (!isset($this->listeners[$type])) {
             $this->listeners[$type] = new HashMap;
         }
-        $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
-        $options = new EventListenOptions($options);
+        $listener = ($listener instanceof Listener\EventListener) ? $listener : new Listener\EventListener($listener);
+        $options = new Listener\Options($options);
         $this->listeners[$type]->set((string)$listener->signature, [
             'listener' => $listener,
             'options' => $options
@@ -45,18 +48,21 @@ trait EventDispatcher {
 
     /**
      * @param string $type
-     * @param callable|\Cwola\Event\EventListener $listener
-     * @param object|\Cwola\Event\EventListenOptions $options [optional]
+     * @param callable|\Cwola\Event\Listener\EventListener $listener
      * @return $this
      */
     public function removeEventListener(
         string $type,
-        callable|EventListener $listener,
-        array|EventListenOptions $options = []
+        callable|Listener\EventListener $listener
     ) :static {
-        $listener = \is_callable($listener) ? new EventListener($listener) : $listener;
-        $options = new EventListenOptions($options);
-        $this->listeners[$type]->unset((string)$listener->signature);
+        $listener = ($listener instanceof Listener\EventListener) ? $listener : new Listener\EventListener($listener);
+        $signature = (string)$listener->signature;
+        if (
+            $this->listeners[$type]->has($signature)
+            && $this->listeners[$type]->get($signature)['options']->removable
+        ) {
+            $this->listeners[$type]->unset($signature);
+        }
         return $this;
     }
 
@@ -70,25 +76,23 @@ trait EventDispatcher {
             return $this;
         }
         $this->listeners[$type]->forEach(function($signature, $info, $type) {
-            /** @var \Cwola\Event\EventListener */
+            /** @var \Cwola\Event\Listener\EventListener */
             $listener = $info['listener'];
-            /** @var \Cwola\Event\EventListenOptions */
+            /** @var \Cwola\Event\Listener\Options */
             $options = $info['options'];
             $event = $this->createEvent($type, $options);
 
-            if ($options->signal instanceof AbortSignal && $options->signal->aborted) {
-                $this->removeEventListener(
-                    $type,
-                    $listener,
-                    $options
-                );
+            if (
+                $options->signal instanceof Signal\Signal
+                && $this->signalHandling($options->signal, $type, $listener, $options, $event) === false
+            ) {
                 return;
             }
             if ($options->once) {
+                $options->removable = true;  // forced.
                 $this->removeEventListener(
                     $type,
-                    $listener,
-                    $options
+                    $listener
                 );
             }
             $listener->handleEvent($event);
@@ -104,21 +108,49 @@ trait EventDispatcher {
 
     /**
      * @param string $type
-     * @param \Cwola\Event\EventListenOptions $options
+     * @param \Cwola\Event\Listener\Options $options
      * @return \Cwola\Event\Event
      */
-    protected function createEvent(string $type, EventListenOptions $options) :Event {
+    protected function createEvent(string $type, Listener\Options $options) :Event {
         return $this->eventFactory()(\strtolower($type), $this, $options);
     }
 
     /**
      * @param void
-     * @return \Cwola\Event\EventFactory
+     * @return \Cwola\Event\Factory\EventFactory
      */
-    protected function eventFactory() :EventFactory {
+    protected function eventFactory() :Factory\EventFactory {
         if ($this->eventFactory === null) {
-            $this->eventFactory = new EventFactory;
+            $this->eventFactory = new Factory\EventFactory;
         }
         return $this->eventFactory;
+    }
+
+    /**
+     * @param \Cwola\Event\Signal\Signal $signal
+     * @param string $type
+     * @param \Cwola\Event\Listener\EventListener $listener
+     * @param \Cwola\Event\Listener\Options $options
+     * @param \Cwola\Event\Event $event
+     * @return bool
+     */
+    protected function signalHandling(
+        Signal\Signal $signal,
+        string $type,
+        Listener\EventListener $listener,
+        Listener\Options $options,
+        Event $event
+    ) :bool {
+        if ($signal instanceof Signal\AbortSignal && $signal->aborted) {
+            $options->removable = true;  // forced.
+            $this->removeEventListener(
+                $type,
+                $listener
+            );
+            return false;
+        } else if ($signal instanceof Signal\SuspendSignal && $signal->suspended) {
+            return false;
+        }
+        return true;
     }
 }

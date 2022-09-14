@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Cwola\Event;
+namespace Cwola\Event\Signature;
 
 use Stringable;
 use Closure;
