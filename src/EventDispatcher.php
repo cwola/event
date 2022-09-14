@@ -37,8 +37,13 @@ trait EventDispatcher {
         if (!isset($this->listeners[$type])) {
             $this->listeners[$type] = new HashMap;
         }
+<<<<<<< HEAD
         $listener = ($listener instanceof Listener\EventListener) ? $listener : new Listener\EventListener($listener);
         $options = new Listener\Options($options);
+=======
+        $listener = ($listener instanceof EventListener) ? $listener : new EventListener($listener);
+        $options = new EventListenOptions($options);
+>>>>>>> 204ed34e53b760139c3e20c1bf1c811a01f2fa18
         $this->listeners[$type]->set((string)$listener->signature, [
             'listener' => $listener,
             'options' => $options
@@ -48,14 +53,24 @@ trait EventDispatcher {
 
     /**
      * @param string $type
+<<<<<<< HEAD
      * @param callable|\Cwola\Event\Listener\EventListener $listener
+=======
+     * @param callable|\Cwola\Event\EventListener $listener
+>>>>>>> 204ed34e53b760139c3e20c1bf1c811a01f2fa18
      * @return $this
      */
     public function removeEventListener(
         string $type,
+<<<<<<< HEAD
         callable|Listener\EventListener $listener
     ) :static {
         $listener = ($listener instanceof Listener\EventListener) ? $listener : new Listener\EventListener($listener);
+=======
+        callable|EventListener $listener
+    ) :static {
+        $listener = ($listener instanceof EventListener) ? $listener : new EventListener($listener);
+>>>>>>> 204ed34e53b760139c3e20c1bf1c811a01f2fa18
         $signature = (string)$listener->signature;
         if (
             $this->listeners[$type]->has($signature)
@@ -82,10 +97,19 @@ trait EventDispatcher {
             $options = $info['options'];
             $event = $this->createEvent($type, $options);
 
+<<<<<<< HEAD
             if (
                 $options->signal instanceof Signal\Signal
                 && $this->signalHandling($options->signal, $type, $listener, $options, $event) === false
             ) {
+=======
+            if ($options->signal instanceof AbortSignal && $options->signal->aborted) {
+                $options->removable = true;  // forced.
+                $this->removeEventListener(
+                    $type,
+                    $listener
+                );
+>>>>>>> 204ed34e53b760139c3e20c1bf1c811a01f2fa18
                 return;
             }
             if ($options->once) {
